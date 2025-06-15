@@ -145,6 +145,23 @@ app.delete("/api/restaurants/:id", async (req, res) => {
   }
 });
 
+//Update Restaurant Route
+app.put("/api/restaurants/:id", async (req, res) => {
+  const { name, address, cuisine, rating } = req.body;
+
+  try {
+    const updated = await Restaurant.findByIdAndUpdate(
+      req.params.id,
+      { name, address, cuisine, rating },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating restaurant" });
+  }
+});
+
+
 
 // Start server
 app.listen(PORT, () => {
