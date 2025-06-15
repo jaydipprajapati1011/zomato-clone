@@ -135,6 +135,17 @@ app.get("/api/restaurants/:id", async (req, res) => {
   }
 });
 
+//Delete Restaurant Route
+app.delete("/api/restaurants/:id", async (req, res) => {
+  try {
+    await Restaurant.findByIdAndDelete(req.params.id);
+    res.json({ message: "Restaurant deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting restaurant" });
+  }
+});
+
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
