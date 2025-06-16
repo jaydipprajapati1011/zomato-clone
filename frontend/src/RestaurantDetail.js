@@ -17,9 +17,15 @@ const RestaurantDetail = () => {
   return (
     <div>
       <h1>{restaurant.name}</h1>
-      <p>{restaurant.location}</p>
+      <p>{restaurant.address}</p> {/* Changed from location to address */}
       <p>{restaurant.cuisine}</p>
-      {restaurant.image && <img src={restaurant.image} alt="Restaurant" width="300" />}
+      {restaurant.image && (
+        <img
+          src={`http://localhost:5000${restaurant.image}`}
+          alt={restaurant.name}
+          width="300"
+        />
+      )}
     </div>
   );
 };

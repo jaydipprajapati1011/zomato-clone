@@ -5,6 +5,9 @@ const jwt = require("jsonwebtoken");
 const SECRET_KEY = "your_secret_key"; // Replace this with an environment variable later
 const authMiddleware = require("./middleware/auth");
 const Restaurant = require("./models/Restaurant");
+const multer = require("multer");
+const path = require("path");
+
 
 // Replace the following with your real connection string from MongoDB
 const MONGO_URL = "mongodb+srv://jay217811:zomato123@cluster0.cbvuarr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -27,34 +30,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// Dummy restaurant data
-const restaurants = [
-  {
-    id: 1,
-    name: "Spicy Bites",
-    image: "http://localhost:5000/spicybites.jpg",
-    cuisine: "Indian, Chinese",
-  },
-  {
-    id: 2,
-    name: "Pizza Palace",
-    image: "http://localhost:5000/pizzaa.jpg",
-    cuisine: "Italian, Pizza",
-  },
-  {
-    id: 3,
-    name: "Sushi World",
-    image: "http://localhost:5000/shushi.jpg",
-    cuisine: "Japanese, Sushi",
-  },
-];
 
-// API route
-app.get("/api/restaurants", (req, res) => {
-  res.json(restaurants);
-});
-// Dummy user list
-let users = [];
+
 
 // Signup
 app.post("/api/signup", async (req, res) => {
@@ -95,18 +72,32 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+// Configure storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
+  },
+});
+
+const upload = multer({ storage: storage });
+
   // dashboard api
   app.get("/api/dashboard", authMiddleware, (req, res) => {
   res.json({ message: `Welcome ${req.user.email}, this is your dashboard.` });
 });
 
   // Add a restaurant (admin only for now)
-app.post("/api/restaurants", async (req, res) => {
+app.post("/api/restaurants", upload.single("image"), async (req, res) => {
   const {  name, address, cuisine, rating  } = req.body;
-
+  const image = req.file ? `/uploads/${req.file.filename}` : "";
  
   try {
-    const newRestaurant = new Restaurant({ name, address, cuisine, rating });
+    const newRestaurant = new Restaurant({ name, address, cuisine, rating ,image,});
     await newRestaurant.save();
     res.status(201).json({ message: "Restaurant added successfully" });
   } catch (err) {
@@ -146,20 +137,26 @@ app.delete("/api/restaurants/:id", async (req, res) => {
 });
 
 //Update Restaurant Route
-app.put("/api/restaurants/:id", async (req, res) => {
+app.put("/api/restaurants/:id", upload.single("image"), async (req, res) => {
   const { name, address, cuisine, rating } = req.body;
+  const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
   try {
+    const updateData = { name, address, cuisine, rating };
+    if (image) updateData.image = image;
+
     const updated = await Restaurant.findByIdAndUpdate(
       req.params.id,
-      { name, address, cuisine, rating },
+      updateData,
       { new: true }
     );
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: "Error updating restaurant" });
   }
 });
+
 
 
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import "./Restaurants.css"
 
 const Restaurants = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -10,7 +11,10 @@ const Restaurants = () => {
     cuisine: "",
     rating: ""
   });
+   const [image, setImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCuisine, setFilterCuisine] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,30 +34,41 @@ const Restaurants = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  const formData = new FormData();
+  formData.append("name", form.name);
+  formData.append("address", form.address);
+  formData.append("cuisine", form.cuisine);
+  formData.append("rating", form.rating);
+  if (image) formData.append("image", image);
+
+  try {
     if (editingId) {
-      // Edit existing
-      axios.put(`http://localhost:5000/api/restaurants/${editingId}`, form)
-        .then(() => {
-          alert("Restaurant updated!");
-          setForm({ name: "", address: "", cuisine: "", rating: "" });
-          setEditingId(null);
-          fetchRestaurants();
-        })
-        .catch(err => console.error(err));
+      await axios.put(
+        `http://localhost:5000/api/restaurants/${editingId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      alert("Restaurant updated!");
     } else {
-      // Add new
-      axios.post("http://localhost:5000/api/restaurants", form)
-        .then(() => {
-          alert("Restaurant added!");
-          setForm({ name: "", address: "", cuisine: "", rating: "" });
-          fetchRestaurants();
-        })
-        .catch(err => console.error(err));
+      await axios.post("http://localhost:5000/api/restaurants", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("Restaurant added!");
     }
-  };
+
+    setForm({ name: "", address: "", cuisine: "", rating: "" });
+    setImage(null);
+    setEditingId(null);
+    fetchRestaurants();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure to delete?")) {
@@ -73,6 +88,12 @@ const Restaurants = () => {
     setEditingId(restaurant._id);
   };
 
+  const filteredRestaurants = restaurants.filter(r =>
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterCuisine ? r.cuisine.toLowerCase() === filterCuisine.toLowerCase() : true)
+  );
+
+
   return (
     <div>
       <h2>{editingId ? "Edit Restaurant" : "Add New Restaurant"}</h2>
@@ -81,19 +102,53 @@ const Restaurants = () => {
         <input name="address" placeholder="Address" value={form.address} onChange={handleChange} />
         <input name="cuisine" placeholder="Cuisine" value={form.cuisine} onChange={handleChange} />
         <input name="rating" placeholder="Rating" value={form.rating} onChange={handleChange} type="number" step="0.1" />
+        <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => setImage(e.target.files[0])}
+/>
+
         <button type="submit">{editingId ? "Update" : "Add"}</button>
+        
       </form>
+      
+       <hr />
+
+      <h3>Search / Filter</h3>
+      <input
+        type="text"
+        placeholder="Search by name..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <input
+        type="text"
+        placeholder="Filter by cuisine..."
+        value={filterCuisine}
+        onChange={(e) => setFilterCuisine(e.target.value)}
+      />
 
       <h2>Restaurant List</h2>
-      <ul>
-        {restaurants.map((r) => (
-          <li key={r._id}>
-            <strong>{r.name}</strong> | {r.cuisine} | Rating: {r.rating}
-            <button onClick={() => handleEdit(r)}>Edit</button>
-            <button onClick={() => handleDelete(r._id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+     <div className="restaurant-list">
+  {filteredRestaurants.map((r) => (
+    <div key={r._id} className="restaurant-card">
+      <div className="restaurant-info">
+      <img
+  src={`http://localhost:5000${r.image}`}
+  alt={r.name}
+  className="restaurant-image"
+/>
+        <div className="restaurant-name">{r.name}</div>
+        <div className="restaurant-details">{r.cuisine} | Rating: {r.rating}</div>
+      </div>
+      <div className="actions">
+        <button onClick={() => handleEdit(r)}>Edit</button>
+        <button onClick={() => handleDelete(r._id)}>Delete</button>
+      </div>
+    </div>
+  ))}
+</div>
+
     </div>
   );
 };

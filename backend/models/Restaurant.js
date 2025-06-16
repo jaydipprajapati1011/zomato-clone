@@ -5,6 +5,7 @@ const restaurantSchema = new mongoose.Schema({
   address: String,
   cuisine: String,
   rating: Number,
+  image: String,
 });
 
 module.exports = mongoose.model("Restaurant", restaurantSchema);
