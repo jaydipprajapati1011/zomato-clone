@@ -3,15 +3,12 @@ import axios from "axios";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import RestaurantCard from "./components/RestaurantCard";
-//import RestaurantDetail from "./pages/RestaurantDetail";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Dashboard from "./Dashboard";
-import Home from "./Home";
 import RestaurantDetail from "./RestaurantDetail";
 import AddRestaurant from "./AddRestaurant";
 import Restaurants from "./Restaurants";
-
 
 function App() {
   const [restaurants, setRestaurants] = useState([]);
@@ -25,7 +22,6 @@ function App() {
       .catch((err) => console.error(err));
   }, []);
 
-  // Filter restaurants based on search input
   const filteredRestaurants = restaurants.filter((r) =>
     r.name.toLowerCase().includes(searchText.toLowerCase()) ||
     r.cuisine.toLowerCase().includes(searchText.toLowerCase())
@@ -51,8 +47,8 @@ function App() {
               <div style={styles.container}>
                 {filteredRestaurants.map((res) => (
                   <div
-                    key={res.id}
-                    onClick={() => navigate(`/restaurant/${res.id}`)}
+                    key={res._id}
+                    onClick={() => navigate(`/restaurants/${res._id}`)}
                     style={{ cursor: "pointer" }}
                   >
                     <RestaurantCard
@@ -66,16 +62,13 @@ function App() {
             </div>
           }
         />
-        <Route path="/restaurant/:id" element={<RestaurantDetail />} />
+        <Route path="/restaurants/:id" element={<RestaurantDetail />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/" element={<Home />} />
-        <Route path="/restaurant/:id" element={<RestaurantDetail />} />
         <Route path="/add-restaurant" element={<AddRestaurant />} />
         <Route path="/restaurants" element={<Restaurants />} />
       </Routes>
-      
     </div>
   );
 }

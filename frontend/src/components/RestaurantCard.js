@@ -4,7 +4,7 @@ import React from "react";
 function RestaurantCard({ name, image, cuisine }) {
   return (
     <div style={styles.card}>
-      <img src={image} alt={name} style={styles.image} />
+      <img src={`http://localhost:5000${image}`} alt={name} style={styles.image} />
       <h3>{name}</h3>
       <p>{cuisine}</p>
     </div>

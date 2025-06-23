@@ -30,8 +30,30 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+// Configure storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
+  },
+});
 
-
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/jpg"];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true); // Accept file
+    } else {
+      cb(new Error("Only JPG and PNG images are allowed")); // Reject file
+    }
+  },
+});
 
 // Signup
 app.post("/api/signup", async (req, res) => {
@@ -72,19 +94,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
-  },
-});
 
-const upload = multer({ storage: storage });
 
   // dashboard api
   app.get("/api/dashboard", authMiddleware, (req, res) => {
@@ -117,9 +127,10 @@ app.get("/api/restaurants", async (req, res) => {
 // Get one restaurant by ID
 app.get("/api/restaurants/:id", async (req, res) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id);
+        const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid ID" });
+    const restaurant = await Restaurant.findById(id);
     if (!restaurant) return res.status(404).json({ message: "Not found" });
-
     res.json(restaurant);
   } catch (err) {
     res.status(500).json({ message: "Error fetching restaurant" });
